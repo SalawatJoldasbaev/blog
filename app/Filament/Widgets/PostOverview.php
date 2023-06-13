@@ -15,9 +15,9 @@ class PostOverview extends Widget
     protected function getViewData(): array
     {
         return [
-            'viewCount'=> PostView::query()->where('post_id', $this->record->id)->count(),
-            'upvotes'=> UpvoteDownvote::query()->where('post_id', $this->record->id)->where('is_upvote', 1)->count(),
-            'downvotes'=> UpvoteDownvote::query()->where('post_id', $this->record->id)->where('is_upvote', 0)->count(),
+            'viewCount'=> PostView::query()->where('post_id', $this->record?->id)->count(),
+            'upvotes'=> UpvoteDownvote::query()->where('post_id', $this->record?->id)->where('is_upvote', 1)->count(),
+            'downvotes'=> UpvoteDownvote::query()->where('post_id', $this->record?->id)->where('is_upvote', 0)->count(),
         ];
     }
 }

@@ -103,7 +103,7 @@
 </nav>
 
 
-<div class="container mx-auto flex flex-wrap py-6">
+<div class="container flex flex-wrap mx-auto py-6">
 
     {{ $slot }}
 

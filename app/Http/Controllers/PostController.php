@@ -8,6 +8,8 @@ use App\Models\PostView;
 use Carbon\Carbon;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class PostController extends Controller
@@ -15,16 +17,59 @@ class PostController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(): View
+    public function home(): View
     {
-        $posts = Post::query()
+        $latestPosts = Post::query()
             ->where('active', true)
             ->whereDate('published_at', '<', Carbon::now())
             ->orderBy('published_at', 'desc')
-            ->select('posts.id', 'title', 'slug', 'thumbnail', 'active', 'published_at', 'user_id', 'body')
             ->with('categories', 'user')
-            ->paginate(5);
-        return view('home', compact('posts'));
+            ->limit(1)
+            ->first();
+
+        $popularPosts = Post::query()
+            ->leftJoin('upvote_downvotes', 'posts.id', 'upvote_downvotes.post_id')
+            ->select('posts.*', DB::raw('COUNT(upvote_downvotes.id) as upvote_count'))
+            ->where(function ($query) {
+                $query
+                    ->whereNull('upvote_downvotes.is_upvote')
+                    ->orWhere('upvote_downvotes.is_upvote', 1);
+            })
+            ->where('active', 1)
+            ->whereDate('published_at', '<', Carbon::now())
+            ->orderByDesc('upvote_count')
+            ->groupBy('posts.id')
+            ->limit(5)
+            ->with('categories', 'user')
+            ->get();
+
+        $user = \request()->user();
+        if ($user) {
+            $leftJoin = "(SELECT cp.category_id, cp.post_id FROM upvote_downvotes JOIN category_post cp ON upvote_downvotes.post_id = cp.post_id WHERE upvote_downvotes.is_upvote = 1 and upvote_downvotes.user_id = ?) as t";
+            $recommendedPosts = Post::query()
+                ->leftJoin('category_post as cp', 'posts.id', 'cp.post_id')
+                ->leftJoin(DB::raw($leftJoin), function ($join) {
+                    $join->on('t.category_id', '=', 'cp.category_id')
+                        ->on('t.post_id', '<>', 'cp.post_id');
+                })->select('posts.*')
+                ->where('posts.id', '<>', DB::raw('t.post_id'))
+                ->setBindings([$user->id])
+                ->with('categories', 'user')
+                ->limit(3)
+                ->get();
+        } else {
+            $recommendedPosts = Post::query()
+                ->leftJoin('post_views', 'posts.id', 'post_views.post_id')
+                ->select('posts.*', DB::raw('COUNT(post_views.id) as view_count'))
+                ->where('active', 1)
+                ->whereDate('published_at', '<', Carbon::now())
+                ->orderByDesc('view_count')
+                ->groupBy('posts.id')
+                ->limit(3)
+                ->with('categories', 'user')
+                ->get();
+        }
+        return view('home', compact('latestPosts', 'popularPosts', 'recommendedPosts'));
     }
 
     /**
@@ -52,10 +97,10 @@ class PostController extends Controller
         PostView::create([
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
-            'post_id'=> $post->id,
-            'user_id'=> $user?->id,
+            'post_id' => $post->id,
+            'user_id' => $user?->id,
         ]);
-        return \view('post.view', compact('post', 'next', 'prev'));
+        return view('post.view', compact('post', 'next', 'prev'));
     }
 
     public function byCategory(Category $category)
