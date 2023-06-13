@@ -1,6 +1,6 @@
 <x-app-layout meta-description="Salawat Joldasbaev blogina xush keldin'iz!">
     <div class="container max-w-5xl mx-auto py-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
             <!-- Latest post -->
             <div class="col-span-2">
                 <h2 class="text-lg sm:text-xl font-bold text-blue-500 uppercase pb-1  border-b-2 border-blue-500 mb-3">
@@ -36,7 +36,8 @@
                                 {{$post->shortBody(10)}}
                             </div>
 
-                            <a href="{{route('view', $post)}}" class="text-xs uppercase text-gray-800 hover:text-black">Continue Reading <i class="fas fa-arrow-right"></i></a>
+                            <a href="{{route('view', $post)}}" class="text-xs uppercase text-gray-800 hover:text-black">Continue
+                                Reading <i class="fas fa-arrow-right"></i></a>
 
                         </div>
                     </div>
@@ -44,7 +45,7 @@
             </div>
         </div>
         <!-- Recommended posts -->
-        <div>
+        <div class="mb-8">
             <h2 class="text-lg sm:text-xl font-bold text-blue-500 uppercase pb-1  border-b-2 border-blue-500 mb-3">
                 Recommended posts
             </h2>
@@ -59,6 +60,18 @@
             <h2 class="text-lg sm:text-xl font-bold text-blue-500 uppercase pb-1  border-b-2 border-blue-500 mb-3">
                 Recent categories
             </h2>
+            @foreach($categories as $category)
+                <div class="mb-6">
+                    <h3 class="text-xl font-bold text-center">
+                        {{$category->title}}
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        @foreach($category->posts()->limit(3)->get() as $post)
+                            <x-post-item :post="$post" :showAuthor="false"/>
+                        @endforeach
+                    </div>
+                </div>
+            @endforeach
         </div>
     </div>
 </x-app-layout>
