@@ -5,9 +5,11 @@ namespace Database\Seeders;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\Post;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 
 class DatabaseSeeder extends Seeder
 {
@@ -41,10 +43,16 @@ class DatabaseSeeder extends Seeder
             ]
         ];
         DB::table('text_widgets')->insert($widgets);
-        User::create([
+        /** @var User $user */
+        $user = User::create([
             'name' => 'Salawat Joldasbaev',
             'email' => 'jsalawatdeveloper@gmail.com',
             'password' => Hash::make('123'),
+            'email_verified_at'=> Carbon::now(),
         ]);
+        $adminRole = Role::create([
+            'name'=> 'admin'
+        ]);
+        $user->assignRole($adminRole);
     }
 }

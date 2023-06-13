@@ -15,5 +15,4 @@
             Get to know us
         </a>
     </div>
-
 </aside>
